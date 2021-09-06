@@ -9,5 +9,9 @@ import UIKit
 
 class TimerView: UIView {
 
-    
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        
+    }
 }
+

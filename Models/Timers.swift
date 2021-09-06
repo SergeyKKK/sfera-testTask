@@ -2,16 +2,22 @@
 //  Child.swift
 //  sferaTZ
 //
-//  Created by Serega Kushnarev on 30.05.2021.
+//  Created by Serega Kushnarev on 28.09.2021.
 //
 
 import Foundation
 
 // MARK: - Timer
 
-struct Timers {
+class Timers {
     ///  name
-    let name: String
+    var name: String
     /// seconds
-    let seconds: String
+    var seconds: Int
+    
+    init(name: String, seconds: Int) {
+        self.name = name
+        self.seconds = seconds
+    }
 }
+

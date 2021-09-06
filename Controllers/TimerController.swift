@@ -1,13 +1,13 @@
 //
-//  UserInformationController.swift
+//  TimerController.swift
 //  sferaTZ
 //
-//  Created by Serega Kushnarev on 28.05.2021.
+//  Created by Serega Kushnarev on 28.09.2021.
 //
 
 import UIKit
 
-// MARK: - UserInformationController
+// MARK: - TimerController
 
 final class TimerController: UIViewController {
     
@@ -22,12 +22,12 @@ final class TimerController: UIViewController {
     private let greyColourTwoView = UIView()
     private let timerTableView = UITableView()
     private var timersArray: [Timers] = []
-
+    
     // MARK: - Life cicle
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+    
         setupViews()
     }
     
@@ -67,18 +67,20 @@ final class TimerController: UIViewController {
         addTimerLabel.textColor = .gray
         addTimerLabel.text = NSLocalizedString("Добавление таймеров", comment: "")
         addTimerLabel.font = addTimerLabel.font.withSize(10)
+       
         view.addSubview(addTimerLabel)
     }
     
     private func setUpGreyColorView() {
         greyColourView.backgroundColor = .gray
         greyColourView.alpha = 0.1
+       
         view.addSubview(greyColourView)
     }
     
     private func setUpNameOfTimerTextField() {
         nameOfTimerTextField.placeholder = NSLocalizedString(" Название таймера", comment: "")
-        nameOfTimerTextField.font = timeFortimerTextField.font?.withSize(10)
+        nameOfTimerTextField.font = nameOfTimerTextField.font?.withSize(10)
         nameOfTimerTextField.layer.cornerRadius = 5
         nameOfTimerTextField.layer.borderWidth = 0.1
         nameOfTimerTextField.delegate = self
@@ -113,7 +115,7 @@ final class TimerController: UIViewController {
     private func setUpTimersrLabel() {
         timersLabel.textColor = .gray
         timersLabel.text = NSLocalizedString("Таймеры", comment: "")
-        timersLabel.font = addTimerLabel.font.withSize(10)
+        timersLabel.font = timersLabel.font.withSize(10)
         view.addSubview(timersLabel)
     }
     
@@ -136,21 +138,19 @@ final class TimerController: UIViewController {
     private func setUpTimer() {
         
         if nameOfTimerTextField.text == "" && timeFortimerTextField.text == "" {
-            showAlert()
+            showAlert(message: "Заполните данные")
         } else {
-            let formatter = DateComponentsFormatter()
-            formatter.allowedUnits = [.hour, .minute, .second]
-            formatter.unitsStyle = .positional
-            let formattedString = formatter.string(from: TimeInterval(Int(timeFortimerTextField.text ?? "") ?? 0))
-            let child = Timers(name: nameOfTimerTextField.text ?? "", seconds: String(formattedString ?? ""))
-            self.timersArray.append(child)
+            
+            let timer = Timers(name: nameOfTimerTextField.text ?? "",
+                               seconds: Int(timeFortimerTextField.text ?? "") ?? 0)
+            self.timersArray.append(timer)
             self.timersArray.sort(by: {$0.seconds > $1.seconds})
             self.timerTableView.reloadData()
         }
     }
     
-    private func showAlert() {
-        let alert = UIAlertController(title: nil, message: "Заполните данные", preferredStyle: .alert)
+    private func showAlert(message: String) {
+        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
         let action = UIAlertAction(title: "OK", style: .default) { (action) in }
         alert.addAction(action)
         present(alert, animated: true, completion: nil)
@@ -178,6 +178,17 @@ extension TimerController: UITextFieldDelegate {
         }
         return true
     }
+    
+    func textField(_ textField: UITextField,
+                   shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        if textField == timeFortimerTextField {
+            let inverseSet = NSCharacterSet(charactersIn:"0123456789").inverted
+            let components = string.components(separatedBy: inverseSet)
+            let filtered = components.joined(separator: "")
+            return string == filtered
+        }
+        return true
+    }
 }
 
 // MARK: - UITableViewDelegate
@@ -187,7 +198,6 @@ extension TimerController: UITableViewDelegate {
     func tableView(_ tableView: UITableView,
                    commit editingStyle: UITableViewCell.EditingStyle,
                    forRowAt indexPath: IndexPath) {
-        
         
         if editingStyle == .delete {
             timersArray.remove(at: indexPath.row)
@@ -208,9 +218,12 @@ extension TimerController: UITableViewDataSource {
         guard let cell = tableView.dequeueReusableCell(
                 withIdentifier: CellForTableView.cellIdentifier,
                 for: indexPath) as? CellForTableView else { return UITableViewCell() }
-        let childs = timersArray[indexPath.row]
-        cell.configuration(timers: childs)
-        
+        let timers = timersArray[indexPath.row]
+        cell.configuration(timers: timers)
+        cell.updateTable = {
+            self.timersArray = self.timersArray.filter { $0.seconds > 0 }
+            self.timerTableView.reloadData()
+        }
         return cell
     }
 }
@@ -221,7 +234,8 @@ private extension TimerController {
     
     func createAddTimerLabel() {
         addTimerLabel.translatesAutoresizingMaskIntoConstraints = false
-        addTimerLabel.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor).isActive = true
+        addTimerLabel.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor,
+                                                    constant: 10).isActive = true
         addTimerLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 0).isActive = true
         addTimerLabel.bottomAnchor.constraint(equalTo: nameOfTimerTextField.safeAreaLayoutGuide.topAnchor,
                                               constant: -15).isActive = true
@@ -265,18 +279,22 @@ private extension TimerController {
     
     func createAddTimerButton() {
         addTimerButton.translatesAutoresizingMaskIntoConstraints = false
-        addTimerButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor).isActive = true
+        addTimerButton.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor,
+                                                    constant: 10).isActive = true
+        addTimerButton.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor,
+                                              constant: -10).isActive = true
         addTimerButton.topAnchor.constraint(equalTo: timeFortimerTextField.safeAreaLayoutGuide.bottomAnchor,
                                          constant: 15).isActive = true
         addTimerButton.bottomAnchor.constraint(equalTo: timersLabel.safeAreaLayoutGuide.topAnchor,
                                             constant: -10).isActive = true
-        addTimerButton.widthAnchor.constraint(equalToConstant: 350).isActive = true
+        addTimerButton.widthAnchor.constraint(equalToConstant: 300).isActive = true
         addTimerButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
     }
     
     func createTimersLabel() {
         timersLabel.translatesAutoresizingMaskIntoConstraints = false
-        timersLabel.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor).isActive = true
+        timersLabel.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor,
+                                                    constant: 10).isActive = true
         timersLabel.topAnchor.constraint(equalTo: addTimerButton.safeAreaLayoutGuide.bottomAnchor,
                                          constant: 10).isActive = true
         timersLabel.bottomAnchor.constraint(equalTo: timerTableView.safeAreaLayoutGuide.topAnchor,
@@ -299,9 +317,14 @@ private extension TimerController {
     func createTimerTableView() {
         timerTableView.translatesAutoresizingMaskIntoConstraints = false
         timerTableView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor).isActive = true
+        timerTableView.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor,
+                                                    constant: 0).isActive = true
+        timerTableView.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor,
+                                              constant: 0).isActive = true
         timerTableView.topAnchor.constraint(equalTo: timersLabel.safeAreaLayoutGuide.bottomAnchor,
                                                constant: 0).isActive = true
-        timerTableView.widthAnchor.constraint(equalToConstant: 370).isActive = true
-        timerTableView.heightAnchor.constraint(equalToConstant: 500).isActive = true
+        timerTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor,
+                                            constant: 0).isActive = true
     }
 }
+
